@@ -24,7 +24,7 @@ En tu archivo de configuración de dependencias (normalmente Program.cs):
 
 ```csharp
 builder.Services.Configure<DbContextOptions>(builder.Configuration.GetSection(DbContextOptions.SectionKey));
-builder.Services.AddScoped<IJsonDbContext, JsonDbContext>();
+builder.Services.AddSingleton<IJsonDbContext, JsonDbContext>();     //or AddScoped
 ```
 ## Uso básico
 ### Obtener un DbSet

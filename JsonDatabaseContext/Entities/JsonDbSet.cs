@@ -2,51 +2,53 @@
 
 public class JsonDbSet<T> where T : class, IJsonEntity
 {
-    private readonly List<T> _items;
-    private readonly Func<List<T>, Task> _saveFunc;
+    private readonly JsonDbContext _context;
 
-    public JsonDbSet(List<T> items, Func<List<T>, Task> saveFunc)
+    public JsonDbSet(JsonDbContext context)
     {
-        _items = items;
-        _saveFunc = saveFunc;
+        _context = context;
     }
 
-    public List<T> Items => _items;
+    public Task<List<T>> GetAllAsync()
+    {
+        return _context.LoadEntityListAsync<T>();
+    }
+
+    public async Task<List<T>> GetAllAsync(Func<T, bool> predicate)
+    {
+        List<T> items = await _context.LoadEntityListAsync<T>();
+        return items.Where(predicate).ToList();
+    }
 
     public async Task AddAsync(T entity)
     {
-        if(entity.Id == Guid.Empty)
+        if (entity.Id == Guid.Empty)
         {
             entity.Id = Guid.NewGuid();
         }
-        _items.Add(entity);
-        await _saveFunc(_items);
+        List<T> items = await _context.LoadEntityListAsync<T>();
+        items.Add(entity);
+        await _context.SaveEntityListAsync(items);
     }
 
-    public async Task RemoveAsync(T entity)
+    public Task RemoveAsync(T entity) => RemoveRangeAsync([entity]);
+
+    public async Task RemoveRangeAsync(IEnumerable<T> entities)
     {
-        _items.Remove(entity);
-        await _saveFunc(_items);
+        List<T> items = await _context.LoadEntityListAsync<T>();
+        HashSet<Guid> ids = entities.Select(e => e.Id).ToHashSet();
+        items.RemoveAll(e => ids.Contains(e.Id));
+        await _context.SaveEntityListAsync(items);
     }
 
     public async Task UpdateAsync(T entity)
     {
-        int index = _items.FindIndex(e => e.Id == entity.Id);
-        if(index != -1)
+        List<T> items = await _context.LoadEntityListAsync<T>();
+        int index = items.FindIndex(e => e.Id == entity.Id);
+        if (index != -1)
         {
-            _items[index] = entity;
-            await _saveFunc(_items);
+            items[index] = entity;
+            await _context.SaveEntityListAsync(items);
         }
     }
-
-    public List<T> GetAll()
-    {
-        return new List<T>(_items);
-    }
-
-    public List<T> GetAll(Func<T, bool> predicate)
-    {
-        return new List<T>(_items.Where(predicate));
-    }
 }
-

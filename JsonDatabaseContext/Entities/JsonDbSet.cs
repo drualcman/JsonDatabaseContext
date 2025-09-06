@@ -31,6 +31,20 @@ public class JsonDbSet<T> where T : class, IJsonEntity
         await _context.SaveEntityListAsync(items);
     }
 
+    public async Task AddRangeAsync(IEnumerable<T> entities)
+    {
+        List<T> items = await _context.LoadEntityListAsync<T>();
+        foreach (T entity in entities)
+        {
+            if (entity.Id == Guid.Empty)
+            {
+                entity.Id = Guid.NewGuid();
+            }
+            items.Add(entity);
+        }
+        await _context.SaveEntityListAsync(items);
+    }
+
     public Task RemoveAsync(T entity) => RemoveRangeAsync([entity]);
 
     public async Task RemoveRangeAsync(IEnumerable<T> entities)
@@ -50,5 +64,11 @@ public class JsonDbSet<T> where T : class, IJsonEntity
             items[index] = entity;
             await _context.SaveEntityListAsync(items);
         }
+    }
+
+    public async Task UpdateRangeAsync(IEnumerable<T> entities)
+    {
+        List<T> items = new(entities);
+        await _context.SaveEntityListAsync(items);
     }
 }

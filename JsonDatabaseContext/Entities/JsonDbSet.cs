@@ -14,12 +14,6 @@ public class JsonDbSet<T> where T : class, IJsonEntity
         return _context.LoadEntityListAsync<T>();
     }
 
-    public async Task<List<T>> GetAllAsync(Func<T, bool> predicate)
-    {
-        List<T> items = await _context.LoadEntityListAsync<T>();
-        return items.Where(predicate).ToList();
-    }
-
     public async Task AddAsync(T entity)
     {
         if (entity.Id == Guid.Empty)
